@@ -13,8 +13,8 @@ async function main() {
     create: {
       id: 'default-user',
       name: 'Default User',
-      email: 'user@example.com'
-    }
+      email: 'user@example.com',
+    },
   })
 
   // コーヒータイプのマスタデータ
@@ -26,14 +26,14 @@ async function main() {
     { name: 'カプチーノ', caffeine: 77, description: 'エスプレッソ+フォームミルク' },
     { name: 'インスタントコーヒー', caffeine: 62, description: '手軽なインスタント' },
     { name: 'カフェオレ', caffeine: 50, description: 'コーヒー+ミルク' },
-    { name: 'アイスコーヒー', caffeine: 95, description: '冷たいコーヒー' }
+    { name: 'アイスコーヒー', caffeine: 95, description: '冷たいコーヒー' },
   ]
 
   for (const type of coffeeTypes) {
     await prisma.coffeeType.upsert({
       where: { name: type.name },
       update: type,
-      create: type
+      create: type,
     })
   }
 
@@ -50,8 +50,8 @@ async function main() {
       enableNotifications: true,
       enableWarnings: true,
       defaultView: 'calendar',
-      weekStartsOn: 0
-    }
+      weekStartsOn: 0,
+    },
   })
 
   // サンプルのコーヒー記録（過去30日分）
@@ -61,17 +61,17 @@ async function main() {
   for (let i = 0; i < 30; i++) {
     const date = new Date(today)
     date.setDate(date.getDate() - i)
-    
+
     // ランダムで1-5杯
     const cups = Math.floor(Math.random() * 5) + 1
-    
+
     for (let j = 0; j < cups; j++) {
-      const hour = 8 + (j * 3) + Math.floor(Math.random() * 2) // 8時〜20時の間
+      const hour = 8 + j * 3 + Math.floor(Math.random() * 2) // 8時〜20時の間
       const minute = Math.floor(Math.random() * 60)
-      
+
       const timestamp = new Date(date)
       timestamp.setHours(hour, minute, 0, 0)
-      
+
       sampleRecords.push({
         userId: defaultUser.id,
         date: new Date(date.getFullYear(), date.getMonth(), date.getDate()),
@@ -79,7 +79,7 @@ async function main() {
         timestamp,
         coffeeType: coffeeTypes[Math.floor(Math.random() * coffeeTypes.length)].name,
         size: ['S', 'M', 'L'][Math.floor(Math.random() * 3)],
-        location: ['自宅', 'オフィス', 'カフェ'][Math.floor(Math.random() * 3)]
+        location: ['自宅', 'オフィス', 'カフェ'][Math.floor(Math.random() * 3)],
       })
     }
   }
@@ -87,7 +87,7 @@ async function main() {
   // バッチ挿入
   for (const record of sampleRecords) {
     await prisma.coffeeRecord.create({
-      data: record
+      data: record,
     })
   }
 
@@ -99,8 +99,8 @@ async function main() {
       targetCups: 3,
       startDate: new Date(),
       title: '1日3杯以下に抑える',
-      description: '健康のために1日のコーヒー摂取量を3杯以下に抑える目標'
-    }
+      description: '健康のために1日のコーヒー摂取量を3杯以下に抑える目標',
+    },
   })
 
   console.log('✅ Seeding completed!')
@@ -110,7 +110,7 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch(e => {
     console.error(e)
     process.exit(1)
   })
