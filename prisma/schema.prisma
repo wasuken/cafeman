@@ -1,0 +1,152 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ユーザー情報（将来的に複数ユーザー対応）
+model User {
+  id        String   @id @default(cuid())
+  email     String?  @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // リレーション
+  coffeeRecords   CoffeeRecord[]
+  coffeeSettings  CoffeeSettings?
+
+  @@map("users")
+}
+
+// コーヒー記録のメインテーブル
+model CoffeeRecord {
+  id        Int      @id @default(autoincrement())
+  userId    String   @default("default-user") // デフォルトユーザー
+  date      DateTime @db.Date
+  cups      Int      @default(1)
+  timestamp DateTime // 実際に飲んだ時刻
+  
+  // 追加情報
+  coffeeType String?  // コーヒーの種類
+  size       String?  // サイズ（S/M/L）
+  location   String?  // 場所（自宅/オフィス/カフェ）
+  notes      String?  @db.Text // メモ
+  
+  // メタ情報
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // リレーション
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // インデックス
+  @@unique([userId, date, timestamp]) // 同じ時刻の重複防止
+  @@index([userId, date])
+  @@index([timestamp])
+  @@map("coffee_records")
+}
+
+// ユーザー設定
+model CoffeeSettings {
+  id     Int    @id @default(autoincrement())
+  userId String @unique
+
+  // 摂取量の設定
+  dailyLimit        Int @default(4)   // 1日の上限杯数
+  warningThreshold  Int @default(3)   // 警告表示する杯数
+  
+  // 時間設定
+  minInterval       Int @default(240) // 最小間隔（分）デフォルト4時間
+  cutoffTime        String @default("18:00") // カフェイン摂取制限時刻
+  
+  // 通知設定
+  enableNotifications Boolean @default(true)
+  enableWarnings      Boolean @default(true)
+  
+  // 表示設定
+  defaultView       String @default("calendar") // calendar/chart/list
+  weekStartsOn      Int    @default(0) // 0=日曜日, 1=月曜日
+  
+  // メタ情報
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // リレーション
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("coffee_settings")
+}
+
+// コーヒータイプのマスタデータ
+model CoffeeType {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique // "エスプレッソ", "ドリップ", "インスタント"
+  caffeine    Int?    // カフェイン含有量（mg）
+  description String? @db.Text
+  isActive    Boolean @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("coffee_types")
+}
+
+// 統計データ（パフォーマンス向上用）
+model CoffeeStats {
+  id       Int    @id @default(autoincrement())
+  userId   String
+  period   String // "daily", "weekly", "monthly"
+  date     DateTime @db.Date
+  
+  // 統計値
+  totalCups     Int @default(0)
+  avgCups       Float @default(0)
+  maxCups       Int @default(0)
+  activeDays    Int @default(0)
+  
+  // JSON形式で詳細データ
+  breakdown Json? // 時間別、タイプ別の詳細
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, period, date])
+  @@index([userId, period])
+  @@map("coffee_stats")
+}
+
+// 目標設定
+model CoffeeGoal {
+  id      Int    @id @default(autoincrement())
+  userId  String
+  
+  // 目標設定
+  type        String   // "reduce", "maintain", "track"
+  targetCups  Int?     // 目標杯数（1日あたり）
+  startDate   DateTime @db.Date
+  endDate     DateTime? @db.Date
+  
+  // 進捗
+  isActive    Boolean @default(true)
+  isAchieved  Boolean @default(false)
+  
+  // メタ情報
+  title       String?
+  description String? @db.Text
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, isActive])
+  @@map("coffee_goals")
+}
+
+// サンプルデータ挿入用SQL
+// CREATE USER 'coffee_user'@'%' IDENTIFIED BY 'coffee_password';
+// GRANT ALL PRIVILEGES ON coffee_meter.* TO 'coffee_user'@'%';
+// FLUSH PRIVILEGES;
