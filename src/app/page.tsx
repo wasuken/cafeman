@@ -58,8 +58,10 @@ export default function HomePage() {
 
   const getTodayCups = () => {
     const today = format(new Date(), 'yyyy-MM-dd')
-    const todayRecord = records.find(r => r.date === today)
-    return todayRecord?.cups || 0
+    const todayTotalCups = records
+      .filter(r => r.date.split('T')[0] === today)
+      .reduce((scm, x) => scm + x.cups || 0, 0)
+    return todayTotalCups;
   }
 
   const getWeeklyAverage = () => {

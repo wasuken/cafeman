@@ -36,12 +36,14 @@ export default function CoffeeCalendar({ records, currentMonth }: CoffeeCalendar
   }
 
   const getCupsForDate = (date: Date) => {
-    const record = records.find(r => isSameDay(new Date(r.date), date))
-    return record?.cups || 0
+    const totalCups = records
+      .filter(r => isSameDay(new Date(r.date), date))
+      .reduce((scm, x) => scm + x.cups || 0, 0)
+    return totalCups
   }
 
   return (
-    <div className='bg-white rounded-lg shadow-md p-6'>
+    <div className='bg-white rounded-lg shadow-md p-6 text-black'>
       <h3 className='text-lg font-semibold mb-4'>
         {format(currentMonth, 'yyyy年MM月', { locale: ja })}
       </h3>

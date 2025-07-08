@@ -8,7 +8,11 @@ export async function POST(request: NextRequest) {
     const { date, cups, time } = await request.json()
 
     const record = await prisma.coffeeRecord.upsert({
-      where: { date: parseISO(date) },
+      where: {
+	userId_date: {
+	  date: parseISO(date), userId: 'default-user',
+	}
+      },
       update: {
         cups: { increment: cups },
         time: parseISO(time),
@@ -16,7 +20,7 @@ export async function POST(request: NextRequest) {
       create: {
         date: parseISO(date),
         cups,
-        time: parseISO(time),
+        timestamp: parseISO(time),
       },
     })
 
