@@ -45,7 +45,7 @@ model CoffeeRecord {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // インデックス
-  @@unique([userId, date])
+  @@unique([userId, date, timestamp])
   @@index([timestamp])
   @@map("coffee_records")
 }
