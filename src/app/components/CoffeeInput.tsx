@@ -39,6 +39,7 @@ export default function CoffeeInput({ onAddCoffee, todayCups }: CoffeeInputProps
         <button
           onClick={() => setCups(Math.max(1, cups - 1))}
           className='w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300'
+          aria-label='Decrement coffee cups'
         >
           <Minus className='w-4 h-4' />
         </button>
@@ -48,6 +49,7 @@ export default function CoffeeInput({ onAddCoffee, todayCups }: CoffeeInputProps
         <button
           onClick={() => setCups(cups + 1)}
           className='w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300'
+          aria-label='Increment coffee cups'
         >
           <Plus className='w-4 h-4' />
         </button>

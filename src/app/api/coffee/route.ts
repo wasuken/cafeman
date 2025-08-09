@@ -2,14 +2,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { format, parseISO } from 'date-fns'
 
+import { headers } from 'next/headers'
+
 // コーヒー記録追加
 export async function POST(request: NextRequest) {
   try {
+    const userId = headers().get('x-user-id')
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { date, cups, time } = await request.json()
 
     const record = await prisma.coffeeRecord.create({
       data: {
-        userId: 'default-user',
+        userId,
         date: parseISO(date),
         cups,
         timestamp: parseISO(time),
@@ -25,6 +32,11 @@ export async function POST(request: NextRequest) {
 // コーヒー記録取得
 export async function GET(request: NextRequest) {
   try {
+    const userId = headers().get('x-user-id')
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const searchParams = request.nextUrl.searchParams
     const month = searchParams.get('month') // YYYY-MM format
 
@@ -35,6 +47,7 @@ export async function GET(request: NextRequest) {
 
       records = await prisma.coffeeRecord.findMany({
         where: {
+          userId,
           date: {
             gte: startDate,
             lte: endDate,
@@ -44,6 +57,7 @@ export async function GET(request: NextRequest) {
       })
     } else {
       records = await prisma.coffeeRecord.findMany({
+        where: { userId },
         orderBy: { date: 'desc' },
         take: 30,
       })

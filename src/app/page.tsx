@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import CoffeeInput from './components/CoffeeInput'
 import CoffeeCalendar from './components/CoffeeCalendar'
-import { Coffee, TrendingUp, Calendar } from 'lucide-react'
+import { Coffee, TrendingUp, Calendar, LogOut } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
+import { useRouter } from 'next/navigation'
 
 interface CoffeeRecord {
   id: number
@@ -14,18 +16,42 @@ interface CoffeeRecord {
 }
 
 export default function HomePage() {
+  const { user, isLoading: isAuthLoading, logout } = useAuth()
+  const router = useRouter()
   const [records, setRecords] = useState<CoffeeRecord[]>([])
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchRecords()
-  }, [currentMonth])
+    if (!isAuthLoading && !user) {
+      router.push('/login')
+    }
+  }, [user, isAuthLoading, router])
+
+  useEffect(() => {
+    if (user) {
+      fetchRecords()
+    }
+  }, [currentMonth, user])
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      logout() // Clear user from context
+      router.push('/login')
+    } catch (error) {
+      console.error('Logout failed', error)
+    }
+  }
 
   const fetchRecords = async () => {
     try {
       const monthStr = format(currentMonth, 'yyyy-MM')
       const response = await fetch(`/api/coffee?month=${monthStr}`)
+      if (response.status === 401) {
+        router.push('/login')
+        return
+      }
       const data = await response.json()
       setRecords(data)
     } catch (error) {
@@ -50,6 +76,8 @@ export default function HomePage() {
 
       if (response.ok) {
         await fetchRecords()
+      } else if (response.status === 401) {
+        router.push('/login')
       }
     } catch (error) {
       console.error('Failed to add coffee:', error)
@@ -61,7 +89,7 @@ export default function HomePage() {
     const todayTotalCups = records
       .filter(r => r.date.split('T')[0] === today)
       .reduce((scm, x) => scm + x.cups || 0, 0)
-    return todayTotalCups;
+    return todayTotalCups
   }
 
   const getWeeklyAverage = () => {
@@ -74,7 +102,7 @@ export default function HomePage() {
     return records.reduce((sum, record) => sum + record.cups, 0)
   }
 
-  if (loading) {
+  if (isAuthLoading || loading) {
     return (
       <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
         <div className='text-center'>
@@ -85,15 +113,32 @@ export default function HomePage() {
     )
   }
 
+  if (!user) {
+    // This is a fallback, middleware should handle redirection.
+    return null
+  }
+
   return (
     <div className='min-h-screen bg-gray-50'>
       <div className='container mx-auto px-4 py-8 max-w-4xl'>
-        <header className='text-center mb-8'>
-          <div className='flex items-center justify-center gap-3 mb-2'>
-            <Coffee className='w-8 h-8 text-brown-600' />
-            <h1 className='text-3xl font-bold text-gray-800'>Coffee Meter</h1>
+        <header className='flex justify-between items-center mb-8'>
+          <div className='text-left'>
+            <div className='flex items-center gap-3 mb-2'>
+              <Coffee className='w-8 h-8 text-brown-600' />
+              <h1 className='text-3xl font-bold text-gray-800'>Coffee Meter</h1>
+            </div>
+            <p className='text-gray-600'>コーヒー摂取量を記録・管理しよう</p>
           </div>
-          <p className='text-gray-600'>コーヒー摂取量を記録・管理しよう</p>
+          <div className='text-right'>
+            <p className='text-sm text-gray-600'>{user.email}</p>
+            <button
+              onClick={handleLogout}
+              className='flex items-center gap-2 text-sm text-blue-600 hover:underline'
+            >
+              <LogOut className='w-4 h-4' />
+              ログアウト
+            </button>
+          </div>
         </header>
 
         <div className='grid gap-6 md:grid-cols-3 mb-8'>

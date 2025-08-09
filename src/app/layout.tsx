@@ -9,10 +9,14 @@ export const metadata: Metadata = {
   description: 'コーヒー摂取量を記録・管理するアプリ',
 }
 
+import { AuthProvider } from '@/context/AuthContext'
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang='ja'>
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   )
 }

@@ -11,8 +11,9 @@ datasource db {
 // ユーザー情報（将来的に複数ユーザー対応）
 model User {
   id        String   @id @default(cuid())
-  email     String?  @unique
+  email     String   @unique
   name      String?
+  password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -27,7 +28,7 @@ model User {
 model CoffeeRecord {
   id        Int      @id @default(autoincrement())
   userId    String   @default("default-user") // デフォルトユーザー
-  date      DateTime @db.Date
+  date      DateTime
   cups      Int      @default(1)
   timestamp DateTime // 実際に飲んだ時刻
   
@@ -35,7 +36,7 @@ model CoffeeRecord {
   coffeeType String?  // コーヒーの種類
   size       String?  // サイズ（S/M/L）
   location   String?  // 場所（自宅/オフィス/カフェ）
-  notes      String?  @db.Text // メモ
+  notes      String? // メモ
   
   // メタ情報
   createdAt DateTime @default(now())
@@ -86,7 +87,7 @@ model CoffeeType {
   id          Int     @id @default(autoincrement())
   name        String  @unique // "エスプレッソ", "ドリップ", "インスタント"
   caffeine    Int?    // カフェイン含有量（mg）
-  description String? @db.Text
+  description String?
   isActive    Boolean @default(true)
   
   createdAt DateTime @default(now())
@@ -100,7 +101,7 @@ model CoffeeStats {
   id       Int    @id @default(autoincrement())
   userId   String
   period   String // "daily", "weekly", "monthly"
-  date     DateTime @db.Date
+  date     DateTime
   
   // 統計値
   totalCups     Int @default(0)
@@ -127,8 +128,8 @@ model CoffeeGoal {
   // 目標設定
   type        String   // "reduce", "maintain", "track"
   targetCups  Int?     // 目標杯数（1日あたり）
-  startDate   DateTime @db.Date
-  endDate     DateTime? @db.Date
+  startDate   DateTime
+  endDate     DateTime?
   
   // 進捗
   isActive    Boolean @default(true)
@@ -136,7 +137,7 @@ model CoffeeGoal {
   
   // メタ情報
   title       String?
-  description String? @db.Text
+  description String?
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
