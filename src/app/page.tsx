@@ -72,11 +72,11 @@ export default function HomePage() {
       const now = new Date()
       const response = await fetch('/api/coffee', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-user-id': user.userId },
         body: JSON.stringify({
           date: format(now, 'yyyy-MM-dd'),
           cups,
-          timestamp: now.toISOString(),
+          time: now.toISOString(),
         }),
       })
 
