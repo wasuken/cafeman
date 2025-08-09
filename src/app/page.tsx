@@ -123,9 +123,7 @@ export default function HomePage() {
 
   const getTodayCups = () => {
     const today = format(new Date(), 'yyyy-MM-dd')
-    return records
-      .filter(r => r.date.split('T')[0] === today)
-      .reduce((sum, x) => sum + x.cups, 0)
+    return records.filter(r => r.date.split('T')[0] === today).reduce((sum, x) => sum + x.cups, 0)
   }
 
   const getWeeklyAverage = () => {
@@ -206,9 +204,7 @@ export default function HomePage() {
               <button onClick={goToPreviousMonth} className='p-2 rounded-md hover:bg-gray-100'>
                 &lt;
               </button>
-              <h2 className='text-lg font-semibold'>
-                {format(currentMonth, 'yyyy年MM月')}
-              </h2>
+              <h2 className='text-lg font-semibold'>{format(currentMonth, 'yyyy年MM月')}</h2>
               <button onClick={goToNextMonth} className='p-2 rounded-md hover:bg-gray-100'>
                 &gt;
               </button>

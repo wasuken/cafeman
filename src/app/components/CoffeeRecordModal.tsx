@@ -64,12 +64,17 @@ export default function CoffeeRecordModal({
           ) : (
             <ul className='space-y-3'>
               {records.map(record => (
-                <li key={record.id} className='p-3 bg-gray-50 rounded-md flex justify-between items-center'>
+                <li
+                  key={record.id}
+                  className='p-3 bg-gray-50 rounded-md flex justify-between items-center'
+                >
                   <div>
                     <p className='font-semibold'>
                       {record.cups} 杯 - {format(new Date(record.timestamp), 'HH:mm')}
                     </p>
-                    {record.coffeeType && <p className='text-sm text-gray-600'>{record.coffeeType}</p>}
+                    {record.coffeeType && (
+                      <p className='text-sm text-gray-600'>{record.coffeeType}</p>
+                    )}
                     {record.notes && <p className='text-sm text-gray-500'>{record.notes}</p>}
                   </div>
                   <button

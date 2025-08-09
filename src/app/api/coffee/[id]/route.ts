@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { CoffeeService } from '@/lib/coffee-service'
 import { headers } from 'next/headers'
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const userId = headers().get('x-user-id')
     if (!userId) {
