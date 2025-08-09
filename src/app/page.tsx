@@ -61,7 +61,7 @@ export default function HomePage() {
     const todayTotalCups = records
       .filter(r => r.date.split('T')[0] === today)
       .reduce((scm, x) => scm + x.cups || 0, 0)
-    return todayTotalCups;
+    return todayTotalCups
   }
 
   const getWeeklyAverage = () => {
