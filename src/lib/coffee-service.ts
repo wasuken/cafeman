@@ -168,6 +168,22 @@ export class CoffeeService {
     })
   }
 
+  // コーヒー記録削除
+  static async deleteCoffeeRecord(id: number, userId: string = DEFAULT_USER_ID) {
+    // 削除しようとしている記録が本当にそのユーザーのものか確認
+    const record = await prisma.coffeeRecord.findUnique({
+      where: { id },
+    })
+
+    if (!record || record.userId !== userId) {
+      throw new Error('Record not found or user not authorized')
+    }
+
+    return await prisma.coffeeRecord.delete({
+      where: { id },
+    })
+  }
+
   // 飲みすぎチェック
   static async checkOverConsumption(userId: string = DEFAULT_USER_ID) {
     const settings = await prisma.coffeeSettings.findUnique({

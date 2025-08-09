@@ -7,6 +7,8 @@ import {
   eachDayOfInterval,
   isSameMonth,
   isSameDay,
+  startOfWeek,
+  endOfWeek,
 } from 'date-fns'
 import { ja } from 'date-fns/locale'
 
@@ -14,31 +16,39 @@ interface CoffeeRecord {
   id: number
   date: string
   cups: number
-  time: string
+  timestamp: string
 }
 
 interface CoffeeCalendarProps {
   records: CoffeeRecord[]
   currentMonth: Date
+  onDateClick: (date: Date) => void
 }
 
-export default function CoffeeCalendar({ records, currentMonth }: CoffeeCalendarProps) {
+export default function CoffeeCalendar({
+  records,
+  currentMonth,
+  onDateClick,
+}: CoffeeCalendarProps) {
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(currentMonth)
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd })
+  // Ensure the calendar grid starts on a Sunday for a full 6 weeks display
+  const startDate = startOfWeek(monthStart)
+  const endDate = endOfWeek(monthEnd)
+  const days = eachDayOfInterval({ start: startDate, end: endDate })
 
   const getIntensity = (cups: number) => {
-    if (cups === 0) return 'bg-gray-100'
-    if (cups <= 2) return 'bg-yellow-200'
-    if (cups <= 4) return 'bg-yellow-400'
-    if (cups <= 6) return 'bg-orange-500'
-    return 'bg-red-600'
+    if (cups === 0) return 'bg-gray-100 hover:bg-gray-200'
+    if (cups <= 2) return 'bg-yellow-200 hover:bg-yellow-300'
+    if (cups <= 4) return 'bg-yellow-400 hover:bg-yellow-500'
+    if (cups <= 6) return 'bg-orange-500 hover:bg-orange-600'
+    return 'bg-red-600 hover:bg-red-700'
   }
 
   const getCupsForDate = (date: Date) => {
     const totalCups = records
       .filter(r => isSameDay(new Date(r.date), date))
-      .reduce((scm, x) => scm + x.cups || 0, 0)
+      .reduce((sum, x) => sum + (x.cups || 0), 0)
     return totalCups
   }
 
@@ -58,15 +68,17 @@ export default function CoffeeCalendar({ records, currentMonth }: CoffeeCalendar
         {days.map(day => {
           const cups = getCupsForDate(day)
           const isToday = isSameDay(day, new Date())
+          const isCurrentMonth = isSameMonth(day, currentMonth)
 
           return (
             <div
               key={day.toISOString()}
+              onClick={() => isCurrentMonth && onDateClick(day)}
               className={`
-                p-2 text-center text-sm rounded
+                p-2 text-center text-sm rounded cursor-pointer transition-colors
                 ${getIntensity(cups)}
                 ${isToday ? 'ring-2 ring-blue-500' : ''}
-                ${!isSameMonth(day, currentMonth) ? 'opacity-50' : ''}
+                ${!isCurrentMonth ? 'text-gray-400 bg-gray-50' : 'text-black'}
               `}
             >
               <div className='font-medium'>{format(day, 'd')}</div>

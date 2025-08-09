@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { format } from 'date-fns'
+import { format, addMonths, subMonths, isSameDay } from 'date-fns'
 import CoffeeInput from './components/CoffeeInput'
 import CoffeeCalendar from './components/CoffeeCalendar'
+import CoffeeRecordModal from './components/CoffeeRecordModal'
 import { Coffee, TrendingUp, Calendar, LogOut } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
@@ -12,7 +13,9 @@ interface CoffeeRecord {
   id: number
   date: string
   cups: number
-  time: string
+  timestamp: string
+  coffeeType?: string
+  notes?: string
 }
 
 export default function HomePage() {
@@ -21,6 +24,9 @@ export default function HomePage() {
   const [records, setRecords] = useState<CoffeeRecord[]>([])
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [loading, setLoading] = useState(true)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [recordsForSelectedDate, setRecordsForSelectedDate] = useState<CoffeeRecord[]>([])
 
   useEffect(() => {
     if (!isAuthLoading && !user) {
@@ -70,12 +76,13 @@ export default function HomePage() {
         body: JSON.stringify({
           date: format(now, 'yyyy-MM-dd'),
           cups,
-          time: now.toISOString(),
+          timestamp: now.toISOString(),
         }),
       })
 
       if (response.ok) {
-        await fetchRecords()
+        const newRecord = await response.json()
+        setRecords(prevRecords => [...prevRecords, newRecord])
       } else if (response.status === 401) {
         router.push('/login')
       }
@@ -84,12 +91,41 @@ export default function HomePage() {
     }
   }
 
+  const handleRecordDelete = (id: number) => {
+    setRecords(prevRecords => prevRecords.filter(r => r.id !== id))
+    setRecordsForSelectedDate(prevRecords => prevRecords.filter(r => r.id !== id))
+    // If no records remain for the selected date, close the modal
+    if (recordsForSelectedDate.length === 1) {
+      closeModal()
+    }
+  }
+
+  const handleDateClick = (date: Date) => {
+    setSelectedDate(date)
+    const dailyRecords = records.filter(r => isSameDay(new Date(r.date), date))
+    setRecordsForSelectedDate(dailyRecords)
+    setIsModalOpen(true)
+  }
+
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setSelectedDate(null)
+    setRecordsForSelectedDate([])
+  }
+
+  const goToPreviousMonth = () => {
+    setCurrentMonth(subMonths(currentMonth, 1))
+  }
+
+  const goToNextMonth = () => {
+    setCurrentMonth(addMonths(currentMonth, 1))
+  }
+
   const getTodayCups = () => {
     const today = format(new Date(), 'yyyy-MM-dd')
-    const todayTotalCups = records
+    return records
       .filter(r => r.date.split('T')[0] === today)
-      .reduce((scm, x) => scm + x.cups || 0, 0)
-    return todayTotalCups
+      .reduce((sum, x) => sum + x.cups, 0)
   }
 
   const getWeeklyAverage = () => {
@@ -114,7 +150,6 @@ export default function HomePage() {
   }
 
   if (!user) {
-    // This is a fallback, middleware should handle redirection.
     return null
   }
 
@@ -161,29 +196,38 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className='grid gap-6 lg:grid-cols-2'>
-          <CoffeeInput onAddCoffee={addCoffee} todayCups={getTodayCups()} />
+        <div className='grid gap-6 lg:grid-cols-5'>
+          <div className='lg:col-span-2'>
+            <CoffeeInput onAddCoffee={addCoffee} todayCups={getTodayCups()} />
+          </div>
 
-          <CoffeeCalendar records={records} currentMonth={currentMonth} />
-        </div>
-
-        <div className='mt-8 bg-white rounded-lg shadow-md p-6'>
-          <h3 className='text-lg font-semibold mb-4'>最近の記録</h3>
-          <div className='space-y-2'>
-            {records.slice(0, 5).map(record => (
-              <div
-                key={record.id}
-                className='flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0'
-              >
-                <div className='text-sm text-gray-600'>
-                  {format(new Date(record.date), 'MM月dd日')}
-                </div>
-                <div className='font-medium'>{record.cups}杯</div>
-              </div>
-            ))}
+          <div className='lg:col-span-3 bg-white rounded-lg shadow-md p-6'>
+            <div className='flex justify-between items-center mb-4'>
+              <button onClick={goToPreviousMonth} className='p-2 rounded-md hover:bg-gray-100'>
+                &lt;
+              </button>
+              <h2 className='text-lg font-semibold'>
+                {format(currentMonth, 'yyyy年MM月')}
+              </h2>
+              <button onClick={goToNextMonth} className='p-2 rounded-md hover:bg-gray-100'>
+                &gt;
+              </button>
+            </div>
+            <CoffeeCalendar
+              records={records}
+              currentMonth={currentMonth}
+              onDateClick={handleDateClick}
+            />
           </div>
         </div>
       </div>
+      <CoffeeRecordModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        records={recordsForSelectedDate}
+        selectedDate={selectedDate}
+        onRecordDelete={handleRecordDelete}
+      />
     </div>
   )
 }
