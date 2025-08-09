@@ -10,7 +10,9 @@ const loginUserSchema = z.object({
 })
 
 // A secret key for signing the JWT. In a real app, use an environment variable.
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-super-secret-key-that-is-at-least-32-chars-long')
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'your-super-secret-key-that-is-at-least-32-chars-long'
+)
 const COOKIE_NAME = 'session'
 
 export async function POST(request: Request) {
@@ -29,13 +31,19 @@ export async function POST(request: Request) {
     })
 
     if (!user) {
-      return NextResponse.json({ error: 'メールアドレスまたはパスワードが正しくありません。' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'メールアドレスまたはパスワードが正しくありません。' },
+        { status: 401 }
+      )
     }
 
     const isPasswordValid = await compare(password, user.password)
 
     if (!isPasswordValid) {
-      return NextResponse.json({ error: 'メールアドレスまたはパスワードが正しくありません。' }, { status: 401 })
+      return NextResponse.json(
+        { error: 'メールアドレスまたはパスワードが正しくありません。' },
+        { status: 401 }
+      )
     }
 
     // Create JWT

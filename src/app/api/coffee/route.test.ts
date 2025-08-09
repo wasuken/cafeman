@@ -89,25 +89,25 @@ describe('/api/coffee', () => {
     })
 
     it('should fetch recent records if no month is specified', async () => {
-        const req = {
-            nextUrl: new URL('http://localhost/api/coffee'),
-          } as NextRequest
-        prismaMock.coffeeRecord.findMany.mockResolvedValue([])
+      const req = {
+        nextUrl: new URL('http://localhost/api/coffee'),
+      } as NextRequest
+      prismaMock.coffeeRecord.findMany.mockResolvedValue([])
 
-        await GET(req)
+      await GET(req)
 
-        expect(prismaMock.coffeeRecord.findMany).toHaveBeenCalledWith(
-          expect.objectContaining({
-            where: { userId: mockUserId },
-          })
-        )
+      expect(prismaMock.coffeeRecord.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId: mockUserId },
+        })
+      )
     })
 
     it('should return 401 if user is not authenticated', async () => {
-        headersMock.mockReturnValue({ get: () => null }) // No user id
-        const req = { nextUrl: new URL('http://localhost/api/coffee') } as NextRequest
-        const response = await GET(req)
-        expect(response.status).toBe(401)
+      headersMock.mockReturnValue({ get: () => null }) // No user id
+      const req = { nextUrl: new URL('http://localhost/api/coffee') } as NextRequest
+      const response = await GET(req)
+      expect(response.status).toBe(401)
     })
   })
 })

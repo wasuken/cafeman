@@ -25,7 +25,10 @@ export async function POST(request: Request) {
     })
 
     if (existingUser) {
-      return NextResponse.json({ error: 'このメールアドレスは既に使用されています。' }, { status: 409 })
+      return NextResponse.json(
+        { error: 'このメールアドレスは既に使用されています。' },
+        { status: 409 }
+      )
     }
 
     const hashedPassword = await hash(password, 12)

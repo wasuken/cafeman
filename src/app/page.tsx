@@ -8,7 +8,6 @@ import { Coffee, TrendingUp, Calendar, LogOut } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 
-
 interface CoffeeRecord {
   id: number
   date: string
@@ -25,9 +24,9 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!isAuthLoading && !user) {
-      router.push('/login');
+      router.push('/login')
     }
-  }, [user, isAuthLoading, router]);
+  }, [user, isAuthLoading, router])
 
   useEffect(() => {
     if (user) {
@@ -37,11 +36,11 @@ export default function HomePage() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      logout(); // Clear user from context
-      router.push('/login');
+      await fetch('/api/auth/logout', { method: 'POST' })
+      logout() // Clear user from context
+      router.push('/login')
     } catch (error) {
-      console.error('Logout failed', error);
+      console.error('Logout failed', error)
     }
   }
 
@@ -50,8 +49,8 @@ export default function HomePage() {
       const monthStr = format(currentMonth, 'yyyy-MM')
       const response = await fetch(`/api/coffee?month=${monthStr}`)
       if (response.status === 401) {
-        router.push('/login');
-        return;
+        router.push('/login')
+        return
       }
       const data = await response.json()
       setRecords(data)
@@ -78,7 +77,7 @@ export default function HomePage() {
       if (response.ok) {
         await fetchRecords()
       } else if (response.status === 401) {
-        router.push('/login');
+        router.push('/login')
       }
     } catch (error) {
       console.error('Failed to add coffee:', error)
@@ -90,7 +89,7 @@ export default function HomePage() {
     const todayTotalCups = records
       .filter(r => r.date.split('T')[0] === today)
       .reduce((scm, x) => scm + x.cups || 0, 0)
-    return todayTotalCups;
+    return todayTotalCups
   }
 
   const getWeeklyAverage = () => {
@@ -116,7 +115,7 @@ export default function HomePage() {
 
   if (!user) {
     // This is a fallback, middleware should handle redirection.
-    return null;
+    return null
   }
 
   return (
@@ -132,8 +131,11 @@ export default function HomePage() {
           </div>
           <div className='text-right'>
             <p className='text-sm text-gray-600'>{user.email}</p>
-            <button onClick={handleLogout} className='flex items-center gap-2 text-sm text-blue-600 hover:underline'>
-              <LogOut className='w-4 h-4'/>
+            <button
+              onClick={handleLogout}
+              className='flex items-center gap-2 text-sm text-blue-600 hover:underline'
+            >
+              <LogOut className='w-4 h-4' />
               ログアウト
             </button>
           </div>

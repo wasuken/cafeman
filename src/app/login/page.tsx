@@ -33,7 +33,7 @@ export default function LoginPage() {
           login(data.user)
           router.push('/')
         } else {
-           setError('ログインセッションの取得に失敗しました。')
+          setError('ログインセッションの取得に失敗しました。')
         }
       } else {
         const data = await response.json()
@@ -60,7 +60,7 @@ export default function LoginPage() {
               id='email'
               type='email'
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               required
               className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline'
             />
@@ -73,7 +73,7 @@ export default function LoginPage() {
               id='password'
               type='password'
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               required
               className='shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline'
             />
