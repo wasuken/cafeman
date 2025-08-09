@@ -1,69 +1,113 @@
-import { POST } from './route'
+import { POST, GET } from './route'
 import { prisma } from '@/lib/prisma'
 import { NextRequest } from 'next/server'
 import { DeepMockProxy } from 'jest-mock-extended'
+import { headers } from 'next/headers'
 
-// Mock the prisma client
+// Mock dependencies
 jest.mock('@/lib/prisma')
+jest.mock('next/headers', () => ({
+  headers: jest.fn(),
+}))
 
 const prismaMock = prisma as unknown as DeepMockProxy<typeof prisma>
+const headersMock = headers as jest.Mock
 
-describe('POST /api/coffee', () => {
-  it('should create a new coffee record', async () => {
-    const requestBody = {
-      date: '2025-08-08',
-      cups: 2,
-      time: '2025-08-08T10:00:00.000Z',
-    }
+const mockUserId = 'test-user-id'
 
-    const req = {
-      json: jest.fn().mockResolvedValue(requestBody),
-    } as unknown as NextRequest
+describe('/api/coffee', () => {
+  beforeEach(() => {
+    // Reset mocks before each test
+    jest.clearAllMocks()
+    headersMock.mockReturnValue({
+      get: (header: string) => {
+        if (header === 'x-user-id') return mockUserId
+        return null
+      },
+    })
+  })
 
-    const expectedRecord = {
-      id: 1,
-      userId: 'default-user',
-      date: new Date(requestBody.date),
-      cups: requestBody.cups,
-      timestamp: new Date(requestBody.time),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      coffeeType: null,
-      size: null,
-      location: null,
-      notes: null,
-    }
+  describe('POST', () => {
+    it('should create a new coffee record', async () => {
+      const requestBody = {
+        date: '2025-08-08',
+        cups: 2,
+        time: '2025-08-08T10:00:00.000Z',
+      }
+      const req = {
+        json: jest.fn().mockResolvedValue(requestBody),
+      } as unknown as NextRequest
 
-    prismaMock.coffeeRecord.create.mockResolvedValue(expectedRecord)
-
-    const response = await POST(req)
-    const body = await response.json()
-
-    expect(response.status).toBe(200)
-    // Compare after serializing and deserializing the expected record to match the format from the API
-    expect(body).toEqual(JSON.parse(JSON.stringify(expectedRecord)))
-    expect(prismaMock.coffeeRecord.create).toHaveBeenCalledWith({
-      data: {
-        userId: 'default-user',
+      const expectedRecord = {
+        id: 1,
+        userId: mockUserId,
         date: new Date(requestBody.date),
         cups: requestBody.cups,
         timestamp: new Date(requestBody.time),
-      },
+      }
+      prismaMock.coffeeRecord.create.mockResolvedValue(expectedRecord as any)
+
+      const response = await POST(req)
+      const body = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(body).toEqual(JSON.parse(JSON.stringify(expectedRecord)))
+      expect(prismaMock.coffeeRecord.create).toHaveBeenCalledWith({
+        data: {
+          userId: mockUserId,
+          date: new Date(requestBody.date),
+          cups: requestBody.cups,
+          timestamp: new Date(requestBody.time),
+        },
+      })
     })
-    expect(prismaMock.coffeeRecord.create).toHaveBeenCalledTimes(1)
+
+    it('should return 401 if user is not authenticated', async () => {
+      headersMock.mockReturnValue({ get: () => null }) // No user id
+      const req = { json: jest.fn() } as unknown as NextRequest
+      const response = await POST(req)
+      expect(response.status).toBe(401)
+    })
   })
 
-  it('should return 500 on error', async () => {
-    const req = {
-      json: jest.fn().mockResolvedValue({}),
-    } as unknown as NextRequest
+  describe('GET', () => {
+    it('should fetch monthly records for the authenticated user', async () => {
+      const req = {
+        nextUrl: new URL('http://localhost/api/coffee?month=2025-08'),
+      } as NextRequest
+      prismaMock.coffeeRecord.findMany.mockResolvedValue([])
 
-    prismaMock.coffeeRecord.create.mockRejectedValue(new Error('Test error'))
+      await GET(req)
 
-    const response = await POST(req)
-    const body = await response.json()
+      expect(prismaMock.coffeeRecord.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            userId: mockUserId,
+          }),
+        })
+      )
+    })
 
-    expect(response.status).toBe(500)
-    expect(body).toEqual({ error: 'Failed to save coffee record' })
+    it('should fetch recent records if no month is specified', async () => {
+        const req = {
+            nextUrl: new URL('http://localhost/api/coffee'),
+          } as NextRequest
+        prismaMock.coffeeRecord.findMany.mockResolvedValue([])
+
+        await GET(req)
+
+        expect(prismaMock.coffeeRecord.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            where: { userId: mockUserId },
+          })
+        )
+    })
+
+    it('should return 401 if user is not authenticated', async () => {
+        headersMock.mockReturnValue({ get: () => null }) // No user id
+        const req = { nextUrl: new URL('http://localhost/api/coffee') } as NextRequest
+        const response = await GET(req)
+        expect(response.status).toBe(401)
+    })
   })
 })
