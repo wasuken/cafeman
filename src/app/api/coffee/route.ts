@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { headers } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { format, parseISO } from 'date-fns'
-
-import { headers } from 'next/headers'
 
 // コーヒー記録追加
 export async function POST(request: NextRequest) {
   try {
-    const userId = headers().get('x-user-id')
+    const headersList = await headers()
+    const userId = headersList.get('x-user-id')
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(record)
   } catch (error) {
+    console.error(error)
     return NextResponse.json({ error: 'Failed to save coffee record' }, { status: 500 })
   }
 }
