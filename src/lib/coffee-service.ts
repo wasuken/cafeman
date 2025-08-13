@@ -26,7 +26,7 @@ export class CoffeeService {
       include: {
         user: true,
       },
-      orderBy: { timestamp: 'desc' },
+      orderBy: { timestamp: 'desc' }, // 表示順序は実際の記録時刻順
     })
   }
 
@@ -66,7 +66,7 @@ export class CoffeeService {
     })
   }
 
-  // 週間統計
+  // 週間統計 (dateフィールドベースで集計)
   static async getWeeklyStats(userId: string = DEFAULT_USER_ID) {
     const startDate = startOfWeek(new Date())
     const endDate = endOfWeek(new Date())
@@ -74,7 +74,8 @@ export class CoffeeService {
     const records = await prisma.coffeeRecord.findMany({
       where: {
         userId,
-        timestamp: {
+        date: {
+          // dateフィールドで期間フィルタリング
           gte: startDate,
           lte: endDate,
         },
@@ -83,35 +84,38 @@ export class CoffeeService {
 
     const totalCups = records.reduce((sum, record) => sum + record.cups, 0)
     const avgPerDay = totalCups / 7
-    const maxInDay = Math.max(
-      ...Object.values(
-        records.reduce(
-          (acc, record) => {
-            const day = record.date.toISOString().split('T')[0]
-            acc[day] = (acc[day] || 0) + record.cups
-            return acc
-          },
-          {} as Record<string, number>
-        )
-      )
+
+    // 日別の合計を計算（dateフィールドベース）
+    const dailyTotals = records.reduce(
+      (acc, record) => {
+        const day = record.date.toISOString().split('T')[0]
+        acc[day] = (acc[day] || 0) + record.cups
+        return acc
+      },
+      {} as Record<string, number>
     )
+
+    const maxInDay = Math.max(...Object.values(dailyTotals), 0)
 
     return {
       totalCups,
       avgPerDay: Math.round(avgPerDay * 10) / 10,
       maxInDay,
-      activeDays: new Set(records.map(r => r.date.toISOString().split('T')[0])).size,
+      activeDays: Object.keys(dailyTotals).length,
     }
   }
 
-  // 時間別の摂取パターン分析
+  // 時間別の摂取パターン分析 (timestampを使用 - 実際の記録時刻が重要)
   static async getHourlyPattern(userId: string = DEFAULT_USER_ID, days: number = 30) {
     const since = subDays(new Date(), days)
 
     const records = await prisma.coffeeRecord.findMany({
       where: {
         userId,
-        timestamp: { gte: since },
+        date: {
+          // 期間フィルタリングはdateフィールド
+          gte: since,
+        },
       },
     })
 
@@ -122,7 +126,7 @@ export class CoffeeService {
     }))
 
     records.forEach(record => {
-      const hour = record.timestamp.getHours()
+      const hour = record.timestamp.getHours() // 時間別分析はtimestamp使用
       hourlyData[hour].count += record.cups
     })
 
@@ -138,7 +142,8 @@ export class CoffeeService {
   static async addCoffeeRecord({
     userId = DEFAULT_USER_ID,
     cups = 1,
-    timestamp = new Date(),
+    date, // 記録対象日
+    timestamp = new Date(), // 実際の記録時刻
     coffeeType,
     size,
     location,
@@ -146,20 +151,19 @@ export class CoffeeService {
   }: {
     userId?: string
     cups?: number
-    timestamp?: Date
+    date: Date // 必須：記録対象日
+    timestamp?: Date // オプション：実際の記録時刻
     coffeeType?: string
     size?: string
     location?: string
     notes?: string
   }) {
-    const date = new Date(timestamp.getFullYear(), timestamp.getMonth(), timestamp.getDate())
-
     return await prisma.coffeeRecord.create({
       data: {
         userId,
-        date,
+        date, // 記録対象日
         cups,
-        timestamp,
+        timestamp, // 実際の記録時刻
         coffeeType,
         size,
         location,
@@ -184,31 +188,45 @@ export class CoffeeService {
     })
   }
 
-  // 飲みすぎチェック
-  static async checkOverConsumption(userId: string = DEFAULT_USER_ID) {
+  // 飲みすぎチェック（指定日の合計をチェック）
+  static async checkOverConsumption(
+    userId: string = DEFAULT_USER_ID,
+    targetDate: Date = new Date()
+  ) {
     const settings = await prisma.coffeeSettings.findUnique({
       where: { userId },
     })
 
-    const todayTotal = await this.getTodayTotal(userId)
+    const dayTotal = await prisma.coffeeRecord.aggregate({
+      where: {
+        userId,
+        date: {
+          gte: startOfDay(targetDate),
+          lte: endOfDay(targetDate),
+        },
+      },
+      _sum: { cups: true },
+    })
+
+    const totalCups = dayTotal._sum.cups || 0
     const dailyLimit = settings?.dailyLimit || 4
     const warningThreshold = settings?.warningThreshold || 3
 
     return {
-      todayTotal,
+      totalCups,
       dailyLimit,
       warningThreshold,
-      isOverLimit: todayTotal >= dailyLimit,
-      shouldWarn: todayTotal >= warningThreshold,
-      remainingCups: Math.max(0, dailyLimit - todayTotal),
+      isOverLimit: totalCups >= dailyLimit,
+      shouldWarn: totalCups >= warningThreshold,
+      remainingCups: Math.max(0, dailyLimit - totalCups),
     }
   }
 
-  // 最後に飲んだ時間からの経過時間チェック
+  // 最後に飲んだ時間からの経過時間チェック (timestampを使用 - 実際の記録時刻が重要)
   static async checkTimeSinceLastCoffee(userId: string = DEFAULT_USER_ID) {
     const lastRecord = await prisma.coffeeRecord.findFirst({
       where: { userId },
-      orderBy: { timestamp: 'desc' },
+      orderBy: { timestamp: 'desc' }, // 実際の記録時刻順
     })
 
     if (!lastRecord) return { timeSinceLastCoffee: null, canDrink: true }
@@ -237,8 +255,8 @@ export class CoffeeService {
     })
   }
 
-  // 目標の進捗確認
-  static async getGoalProgress(userId: string = DEFAULT_USER_ID) {
+  // 目標の進捗確認（指定日ベース）
+  static async getGoalProgress(userId: string = DEFAULT_USER_ID, targetDate: Date = new Date()) {
     const activeGoals = await prisma.coffeeGoal.findMany({
       where: {
         userId,
@@ -246,13 +264,24 @@ export class CoffeeService {
       },
     })
 
-    const todayTotal = await this.getTodayTotal(userId)
+    const dayTotal = await prisma.coffeeRecord.aggregate({
+      where: {
+        userId,
+        date: {
+          gte: startOfDay(targetDate),
+          lte: endOfDay(targetDate),
+        },
+      },
+      _sum: { cups: true },
+    })
+
+    const totalCups = dayTotal._sum.cups || 0
 
     return activeGoals.map(goal => ({
       ...goal,
-      currentProgress: todayTotal,
-      isOnTrack: goal.targetCups ? todayTotal <= goal.targetCups : true,
-      progressPercentage: goal.targetCups ? Math.min((todayTotal / goal.targetCups) * 100, 100) : 0,
+      currentProgress: totalCups,
+      isOnTrack: goal.targetCups ? totalCups <= goal.targetCups : true,
+      progressPercentage: goal.targetCups ? Math.min((totalCups / goal.targetCups) * 100, 100) : 0,
     }))
   }
 }

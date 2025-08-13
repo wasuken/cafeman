@@ -5,7 +5,7 @@ import '@testing-library/jest-dom'
 
 describe('CoffeeInput Component', () => {
   it('should render the component with initial state', () => {
-    render(<CoffeeInput onAddCoffee={jest.fn()} todayCups={2} />)
+    render(<CoffeeInput onAddCoffee={jest.fn()} todayCups={2} currentDate={new Date()} />)
 
     // Check for the title
     expect(screen.getByText('今日のコーヒー')).toBeInTheDocument()
@@ -21,7 +21,7 @@ describe('CoffeeInput Component', () => {
   })
 
   it('should increment and decrement the number of cups to add', () => {
-    render(<CoffeeInput onAddCoffee={jest.fn()} todayCups={0} />)
+    render(<CoffeeInput onAddCoffee={jest.fn()} todayCups={0} currentDate={new Date()} />)
 
     const incrementButton = screen.getByRole('button', { name: 'Increment coffee cups' })
     const decrementButton = screen.getByRole('button', { name: 'Decrement coffee cups' })
@@ -43,7 +43,7 @@ describe('CoffeeInput Component', () => {
   })
 
   it('should not decrement below 1', () => {
-    render(<CoffeeInput onAddCoffee={jest.fn()} todayCups={0} />)
+    render(<CoffeeInput onAddCoffee={jest.fn()} todayCups={0} currentDate={new Date()} />)
     const decrementButton = screen.getByRole('button', { name: 'Decrement coffee cups' })
 
     // Initial value is 1
@@ -56,7 +56,7 @@ describe('CoffeeInput Component', () => {
 
   it('should call onAddCoffee with the correct number of cups when submit is clicked', () => {
     const mockOnAddCoffee = jest.fn()
-    render(<CoffeeInput onAddCoffee={mockOnAddCoffee} todayCups={0} />)
+    render(<CoffeeInput onAddCoffee={mockOnAddCoffee} todayCups={0} currentDate={new Date()} />)
 
     const incrementButton = screen.getByRole('button', { name: 'Increment coffee cups' })
     const submitButton = screen.getByRole('button', { name: 'コーヒーを記録' })
@@ -74,7 +74,7 @@ describe('CoffeeInput Component', () => {
   })
 
   it('should reset the number of cups to 1 after submission', () => {
-    render(<CoffeeInput onAddCoffee={jest.fn()} todayCups={0} />)
+    render(<CoffeeInput onAddCoffee={jest.fn()} todayCups={0} currentDate={new Date()} />)
     const incrementButton = screen.getByRole('button', { name: 'Increment coffee cups' })
     const submitButton = screen.getByRole('button', { name: 'コーヒーを記録' })
 
@@ -85,5 +85,10 @@ describe('CoffeeInput Component', () => {
 
     // After submission, the counter should reset to 1
     expect(screen.getByText('1')).toBeInTheDocument()
+  })
+
+  it('should set currentDate another today', () => {
+    render(<CoffeeInput onAddCoffee={jest.fn()} todayCups={0} currentDate={new Date(2023, 1, 1)} />)
+    expect(screen.getByText('2023年02月01日')).toBeInTheDocument()
   })
 })

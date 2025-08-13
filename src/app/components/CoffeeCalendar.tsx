@@ -22,12 +22,16 @@ interface CoffeeRecord {
 interface CoffeeCalendarProps {
   records: CoffeeRecord[]
   currentMonth: Date
+  selectedDate?: Date | null
+  calendarMode: 'view' | 'select'
   onDateClick: (date: Date) => void
 }
 
 export default function CoffeeCalendar({
   records,
   currentMonth,
+  selectedDate,
+  calendarMode,
   onDateClick,
 }: CoffeeCalendarProps) {
   const monthStart = startOfMonth(currentMonth)
@@ -69,20 +73,31 @@ export default function CoffeeCalendar({
           const cups = getCupsForDate(day)
           const isToday = isSameDay(day, new Date())
           const isCurrentMonth = isSameMonth(day, currentMonth)
+          const isSelected = selectedDate && isSameDay(day, selectedDate)
+          const isFuture = day > new Date()
 
           return (
             <div
               key={day.toISOString()}
-              onClick={() => isCurrentMonth && onDateClick(day)}
+              onClick={() => isCurrentMonth && !isFuture && onDateClick(day)}
               className={`
-                p-2 text-center text-sm rounded cursor-pointer transition-colors
+                p-2 text-center text-sm rounded transition-colors relative
                 ${getIntensity(cups)}
                 ${isToday ? 'ring-2 ring-blue-500' : ''}
+                ${isSelected ? 'ring-2 ring-purple-500 ring-offset-1' : ''}
                 ${!isCurrentMonth ? 'text-gray-400 bg-gray-50' : 'text-black'}
+                ${isFuture ? 'text-gray-300 bg-gray-50 cursor-not-allowed' : 'cursor-pointer'}
+                ${calendarMode === 'select' && isCurrentMonth && !isFuture ? 'hover:ring-2 hover:ring-purple-300' : ''}
               `}
             >
               <div className='font-medium'>{format(day, 'd')}</div>
               {cups > 0 && <div className='text-xs mt-1'>{cups}杯</div>}
+              {isSelected && (
+                <div className='absolute top-0 right-0 w-2 h-2 bg-purple-500 rounded-full'></div>
+              )}
+              {calendarMode === 'select' && isCurrentMonth && (
+                <div className='absolute bottom-0 left-0 text-xs text-purple-600'>📅</div>
+              )}
             </div>
           )
         })}
