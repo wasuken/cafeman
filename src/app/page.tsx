@@ -5,9 +5,10 @@ import { format, addMonths, subMonths, isSameDay, isSameMonth } from 'date-fns'
 import CoffeeInput from './components/CoffeeInput'
 import CoffeeCalendar from './components/CoffeeCalendar'
 import CoffeeRecordModal from './components/CoffeeRecordModal'
-import { Coffee, TrendingUp, Calendar, LogOut, Eye, MousePointer } from 'lucide-react'
+import { Coffee, TrendingUp, Calendar, LogOut, Eye, MousePointer, BarChart3 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 interface CoffeeRecord {
   id: number
@@ -250,13 +251,22 @@ export default function HomePage() {
           </div>
           <div className='text-right'>
             <p className='text-sm text-gray-600'>{user.email}</p>
-            <button
-              onClick={handleLogout}
-              className='flex items-center gap-2 text-sm text-blue-600 hover:underline'
-            >
-              <LogOut className='w-4 h-4' />
-              ログアウト
-            </button>
+            <div className='flex items-center gap-3 mt-1'>
+              <Link
+                href='/charts'
+                className='flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 transition-colors'
+              >
+                <BarChart3 className='w-4 h-4' />
+                データ分析
+              </Link>
+              <button
+                onClick={handleLogout}
+                className='flex items-center gap-2 text-sm text-blue-600 hover:underline'
+              >
+                <LogOut className='w-4 h-4' />
+                ログアウト
+              </button>
+            </div>
           </div>
         </header>
 
