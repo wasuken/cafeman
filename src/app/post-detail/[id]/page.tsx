@@ -1,15 +1,16 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, use } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Coffee } from 'lucide-react'
 import Link from 'next/link'
 import PostCard from '@/app/components/sns/PostCard'
+import CommentSection from '@/app/components/sns/CommentSection'
 import LoadingSpinner from '@/app/components/sns/LoadingSpinner'
 import type { PostWithStats } from '@/types/sns'
 
 interface PostDetailPageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default function PostDetailPage({ params }: PostDetailPageProps) {
@@ -19,17 +20,20 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // React.use()でparamsを解決
+  const resolvedParams = use(params)
+
   useEffect(() => {
     if (!isAuthLoading && !user) {
       router.push('/login')
       return
     }
     if (user) fetchPost()
-  }, [user, isAuthLoading, router, params.id])
+  }, [user, isAuthLoading, router, resolvedParams.id])
 
   const fetchPost = async () => {
     try {
-      const response = await fetch(`/api/posts/${params.id}`)
+      const response = await fetch(`/api/posts/${resolvedParams.id}`)
       if (response.ok) {
         const data = await response.json()
         setPost(data)
@@ -82,14 +86,12 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
           <div className='w-20'></div>
         </header>
 
-        <PostCard post={post} />
+        <div className='space-y-6'>
+          {/* 投稿カード */}
+          <PostCard post={post} />
 
-        <div className='mt-6 bg-white rounded-lg shadow-md p-6'>
-          <h3 className='text-lg font-semibold text-gray-800 mb-4'>コメント</h3>
-          <div className='text-center py-8 text-gray-500'>
-            <Coffee className='w-12 h-12 text-gray-300 mx-auto mb-2' />
-            <p>コメント機能は次のフェーズで実装予定です</p>
-          </div>
+          {/* コメントセクション */}
+          <CommentSection postId={post.id} />
         </div>
       </div>
     </div>

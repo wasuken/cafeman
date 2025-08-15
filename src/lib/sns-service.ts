@@ -1,5 +1,3 @@
-'use strict'
-
 import { prisma } from './prisma'
 import type {
   Post,

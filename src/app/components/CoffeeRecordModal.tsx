@@ -33,7 +33,8 @@ export default function CoffeeRecordModal({
     if (!confirm('この記録を削除しますか？')) return
 
     try {
-      const response = await fetch(`/api/coffee/${id}`, {
+      // 新しいエンドポイントに変更
+      const response = await fetch(`/api/coffee-records/${id}`, {
         method: 'DELETE',
       })
 

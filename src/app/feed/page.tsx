@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
-import { Coffee, Plus, RefreshCw, ArrowLeft } from 'lucide-react'
+import { Coffee, Plus, RefreshCw, ArrowLeft, TrendingUp, Clock } from 'lucide-react'
 import Link from 'next/link'
 import PostCard from '@/app/components/sns/PostCard'
 import LoadingSpinner from '@/app/components/sns/LoadingSpinner'
@@ -13,6 +13,7 @@ export default function FeedPage() {
   const router = useRouter()
   const { posts, isLoading, hasMore, refreshPosts, loadMore } = useFeedPosts()
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [deletedPosts, setDeletedPosts] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     if (!isAuthLoading && !user) router.push('/login')
@@ -20,9 +21,17 @@ export default function FeedPage() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
+    setDeletedPosts(new Set()) // 削除された投稿リストをクリア
     await refreshPosts()
     setIsRefreshing(false)
   }
+
+  const handlePostDelete = (postId: number) => {
+    setDeletedPosts(prev => new Set([...prev, postId]))
+  }
+
+  // 削除された投稿を除外
+  const visiblePosts = posts.filter(post => !deletedPosts.has(post.id))
 
   if (isAuthLoading || !user) return <LoadingSpinner size='lg' message='読み込み中...' />
 
@@ -50,20 +59,34 @@ export default function FeedPage() {
           </button>
         </header>
 
-        <div className='mb-6'>
-          <Link
-            href='/post-create'
-            className='flex items-center justify-center gap-2 w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors'
-          >
-            <Plus className='w-5 h-5' />
-            新しい投稿
-          </Link>
+        {/* フィードの統計情報 */}
+        <div className='bg-white rounded-lg shadow-md p-4 mb-6'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-4'>
+              <div className='flex items-center gap-2 text-sm text-gray-600'>
+                <TrendingUp className='w-4 h-4' />
+                <span>{visiblePosts.length} 件の投稿</span>
+              </div>
+              <div className='flex items-center gap-2 text-sm text-gray-600'>
+                <Clock className='w-4 h-4' />
+                <span>最新更新</span>
+              </div>
+            </div>
+            <Link
+              href='/post-create'
+              className='flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors'
+            >
+              <Plus className='w-4 h-4' />
+              投稿作成
+            </Link>
+          </div>
         </div>
 
+        {/* 投稿一覧 */}
         <div className='space-y-6'>
-          {isLoading && posts.length === 0 ? (
+          {isLoading && visiblePosts.length === 0 ? (
             <LoadingSpinner size='lg' message='フィードを読み込み中...' />
-          ) : posts.length === 0 ? (
+          ) : visiblePosts.length === 0 ? (
             <div className='text-center py-12'>
               <Coffee className='w-16 h-16 text-gray-300 mx-auto mb-4' />
               <h3 className='text-lg font-semibold text-gray-600 mb-2'>まだ投稿がありません</h3>
@@ -80,9 +103,10 @@ export default function FeedPage() {
             </div>
           ) : (
             <>
-              {posts.map(post => (
-                <PostCard key={post.id} post={post} />
+              {visiblePosts.map(post => (
+                <PostCard key={post.id} post={post} onDelete={() => handlePostDelete(post.id)} />
               ))}
+
               {hasMore && (
                 <div className='flex justify-center py-6'>
                   <button
@@ -104,8 +128,14 @@ export default function FeedPage() {
                   </button>
                 </div>
               )}
-              {!hasMore && posts.length > 0 && (
-                <div className='text-center py-6 text-gray-500'>すべての投稿を表示しました</div>
+
+              {!hasMore && visiblePosts.length > 0 && (
+                <div className='text-center py-6'>
+                  <div className='flex items-center justify-center gap-2 text-gray-500'>
+                    <Coffee className='w-5 h-5' />
+                    <span>すべての投稿を表示しました</span>
+                  </div>
+                </div>
               )}
             </>
           )}

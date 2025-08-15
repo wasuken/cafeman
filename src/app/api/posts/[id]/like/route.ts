@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import { SNSService } from '@/lib/sns-service'
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const userId = headers().get('x-user-id')
+    const userId = (await headers()).get('x-user-id')
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const postId = parseInt(params.id, 10)
+    const resolvedParams = await params
+    const postId = parseInt(resolvedParams.id, 10)
     if (isNaN(postId)) return NextResponse.json({ error: 'Invalid post ID' }, { status: 400 })
 
     const result = await SNSService.toggleLike(postId, userId)
