@@ -1,0 +1,48 @@
+graph TD
+    Root[Coffee Meter App]
+    
+    %% 認証
+    Root --> Auth[認証]
+    Auth --> Login[login]
+    Auth --> Register[register]
+    
+    %% メイン機能
+    Root --> Main[メイン機能]
+    Main --> Home[home]
+    Main --> Charts[charts]
+    
+    %% SNS機能
+    Root --> Social[SNS機能]
+    
+    Social --> Feed["🆕 feed"]
+    
+    Social --> Post["🆕 投稿"]
+    Post --> PostCreate["🆕 post-create"]
+    Post --> PostDetail["🆕 post-detail"]
+    Post --> PostEdit["🆕 post-edit"]
+    
+    Social --> Profile["🆕 プロフィール"]
+    Profile --> ProfileMy["🆕 profile-my"]
+    Profile --> ProfileUser["🆕 profile-user"]
+    Profile --> ProfileEdit["🆕 profile-edit"]
+    Profile --> ProfileFollowers["🆕 profile-followers"]
+    Profile --> ProfileFollowing["🆕 profile-following"]
+    
+    Social --> Notifications["🆕 notifications"]
+    
+    style Root fill:#e3f2fd
+    style Auth fill:#fff3e0
+    style Main fill:#e8f5e8
+    style Social fill:#ff5722,color:#fff
+    style Post fill:#ff5722,color:#fff
+    style Profile fill:#ff5722,color:#fff
+    style Feed fill:#ff5722,color:#fff
+    style PostCreate fill:#ff5722,color:#fff
+    style PostDetail fill:#ff5722,color:#fff
+    style PostEdit fill:#ff5722,color:#fff
+    style ProfileMy fill:#ff5722,color:#fff
+    style ProfileUser fill:#ff5722,color:#fff
+    style ProfileEdit fill:#ff5722,color:#fff
+    style ProfileFollowers fill:#ff5722,color:#fff
+    style ProfileFollowing fill:#ff5722,color:#fff
+    style Notifications fill:#ff5722,color:#fff
