@@ -21,7 +21,14 @@
     "db:seed": "prisma db seed",
     "test": "npm run test:api && npm run test:ui",
     "test:api": "jest --config jest.config.api.ts",
-    "test:ui": "jest --config jest.config.ui.ts"
+    "test:ui": "jest --config jest.config.ui.ts",
+    "test:watch": "jest --watch",
+    "test:watch:api": "jest --config jest.config.api.ts --watch",
+    "test:watch:ui": "jest --config jest.config.ui.ts --watch",
+    "test:coverage": "npm run test:coverage:api && npm run test:coverage:ui",
+    "test:coverage:api": "jest --config jest.config.api.ts --coverage",
+    "test:coverage:ui": "jest --config jest.config.ui.ts --coverage",
+    "test:ci": "jest --ci --coverage --watchAll=false"
   },
   "dependencies": {
     "@types/multer": "^2.0.0",

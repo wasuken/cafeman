@@ -7,12 +7,19 @@ const createJestConfig = nextJest({
 
 const config: Config = {
   testEnvironment: 'node',
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.api.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   preset: 'ts-jest',
-  testMatch: ['**/*.test.ts'],
+  testMatch: ['**/__tests__/**/*.test.ts'],
+  collectCoverageFrom: [
+    'src/app/api/**/*.ts',
+    '!src/app/api/**/*.test.ts',
+    '!src/app/api/**/route.ts', // Next.js route files are tested via integration
+  ],
+  coverageDirectory: 'coverage/api',
+  coverageReporters: ['text', 'lcov', 'html'],
 }
 
 export default createJestConfig(config)
